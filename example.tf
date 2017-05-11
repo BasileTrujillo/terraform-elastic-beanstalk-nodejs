@@ -2,8 +2,9 @@
 ## Your variables
 ##################################################
 variable "aws_region" {
-  type    = "string"
-  default = "eu-west-1"
+  type        = "string"
+  description = "The AWS Region"
+  default     = "eu-west-1"
 }
 
 ##################################################
@@ -12,6 +13,7 @@ variable "aws_region" {
 provider "aws" {
   region = "${var.aws_region}"
 }
+
 
 ##################################################
 ## Elastic Beanstalk config
@@ -32,12 +34,13 @@ module "app" {
 
   # ELB
   enable_https = "false"
+  elb_connection_timeout = "120"
 
   # Security
-  vpc_id = "vpc-827f5ee6"
-  vpc_subnets = "subnet-b9ac9ddd"
-  elb_subnets = "subnet-d34370b7"
-  security_groups = "sg-2885d24e"
+  vpc_id = "vpc-xxxxxxx"
+  vpc_subnets = "subnet-xxxxxxx"
+  elb_subnets = "subnet-xxxxxxx"
+  security_groups = "sg-xxxxxxx"
 }
 
 ##################################################
@@ -47,7 +50,7 @@ module "app_dns" {
   source = "github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs//r53-alias"
   aws_region = "${var.aws_region}"
 
-  domain = "exaprint.io"
-  domain_name = "app-test.exaprint.io"
+  domain = "example.io"
+  domain_name = "app-test.example.io"
   eb_cname = "${module.app.eb_cname}"
 }

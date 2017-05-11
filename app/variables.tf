@@ -92,6 +92,12 @@ variable "enable_https" {
   default = "true"
   description = "Enable or disable HTTPS connection on port 443."
 }
+variable "elb_connection_timeout" {
+  type = "string"
+  default = "60"
+  description = "Number of seconds that the load balancer waits for any data to be sent or received over the connection."
+}
+
 
 # NodeJS
 # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options-specific.html#command-options-nodejs

@@ -77,6 +77,10 @@ module "app_dns" {
 }
 ``` 
 
+### Example
+
+Take a look at [example.tf](./example.tf) for a full example.
+
 ## Customize
 
 Many options are available through variables. Feel free to look into `app/variables.tf` to see all parameters you can setup.
