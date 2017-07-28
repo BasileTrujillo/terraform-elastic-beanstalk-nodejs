@@ -6,6 +6,14 @@ variable "aws_region" {
   description = "The AWS Region"
   default     = "eu-west-1"
 }
+variable "service_name" {
+  type    = "string"
+  default = "nodejs-app-test"
+}
+variable "service_description" {
+  type    = "string"
+  default = "My awesome nodeJs App"
+}
 
 ##################################################
 ## AWS config
@@ -14,17 +22,21 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
-
 ##################################################
 ## Elastic Beanstalk config
 ##################################################
+resource "aws_elastic_beanstalk_application" "eb_app" {
+  name        = "${var.service_name}"
+  description = "${var.service_description}"
+}
+
 module "app" {
-  source = "github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs//app"
+  source = "github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs//eb-env"
   aws_region = "${var.aws_region}"
 
   # Application settings
-  service_name = "nodejs-app-test"
-  service_description = "My awesome nodeJs App"
+  service_name = "${var.service_name}"
+  service_description = "${var.service_description}"
   env = "dev"
 
   # Instance settings
