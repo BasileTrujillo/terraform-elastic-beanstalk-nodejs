@@ -108,13 +108,18 @@ variable "node_cmd" {
 }
 variable "node_version" {
   type    = "string"
-  default = "7.6.0"
+  default = "8.1.4"
   description = "Version of Node.js."
 }
 variable "proxy_server" {
   type    = "string"
   default = "none"
   description = "Specifies which web server should be used to proxy connections to Node.js."
+}
+
+variable "xray_enable" {
+  type    = "string"
+  default = "true"
 }
 
 # Security

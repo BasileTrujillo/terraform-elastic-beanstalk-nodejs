@@ -234,4 +234,12 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     name      = "ProxyServer"
     value     = "${var.proxy_server}"
   }
+
+  # Run the AWS X-Ray daemon to relay trace information from your X-Ray integrated Node.js application.
+  setting {
+    namespace = "aws:elasticbeanstalk:xray"
+    name      = "XRayEnabled"
+    value     = "${var.xray_enable}"
+  }
+
 }
