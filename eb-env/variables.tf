@@ -7,6 +7,12 @@ variable "aws_region" {
   description = "The AWS Region"
 }
 
+variable "aws_profile" {
+  type    = "string"
+  default = "default"
+  description = "The AWS Profile credentials profile"
+}
+
 # Application
 variable "service_name" {
   type    = "string"
