@@ -1,0 +1,24 @@
+{
+  "name": "terraform-elastic-beanstalk-nodejs",
+  "version": "1.7.2",
+  "description": "Terraform script to setup AWS Elastic Beanstalk with a load-balanced or Single Instance NodeJS app.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "changelog": "auto-changelog -l false"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs.git"
+  },
+  "author": "[L0gIn] Basile Trujillo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs/issues"
+  },
+  "homepage": "https://github.com/BasileTrujillo/terraform-elastic-beanstalk-nodejs#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "auto-changelog": "^1.8.0"
+  }
+}
