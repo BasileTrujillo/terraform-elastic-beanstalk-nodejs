@@ -69,11 +69,15 @@ resource "aws_cloudfront_distribution" "app_cdn" {
     compress = "${var.cache_compress}"
 
     forwarded_values {
+      // Query String Forwarding and Caching
       query_string = "${var.cache_forward_query_string}"
 
-      cookies {
+      cookies { // Forward Cookies
         forward = "${var.cache_forward_cookies}"
       }
+
+      // Cache Based on Selected Request Headers
+      headers = "${var.cache_forward_headers}"
     }
 
     viewer_protocol_policy = "${var.cache_viewer_protocol_policy}"
@@ -87,8 +91,8 @@ resource "aws_cloudfront_distribution" "app_cdn" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "whitelist"
-      locations        = ["US", "FR", "GB", "DE"]
+      restriction_type = "${var.geo_restriction_type}"
+      locations        = "${var.geo_restriction_locations}"
     }
   }
 

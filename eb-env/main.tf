@@ -74,7 +74,6 @@ resource "aws_iam_policy_attachment" "beanstalk_ec2_web" {
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
-
 ##################################################
 ## Elastic Beanstalk
 ##################################################
@@ -90,6 +89,21 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
     value     = "${var.instance_type}"
+  }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "RootVolumeType"
+    value     = "${var.instance_volume_type}"
+  }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "RootVolumeSize"
+    value     = "${var.instance_volume_size}"
+  }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "RootVolumeIOPS"
+    value     = "${var.instance_volume_iops}"
   }
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
@@ -109,7 +123,7 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "ServiceRole"
-    value     = "${aws_iam_instance_profile.beanstalk_service.name}"
+    value     = "${aws_iam_role.beanstalk_service.name}"
   }
 
   # Configure your environment to launch resources in a custom VPC
@@ -124,9 +138,9 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     value     = "${var.vpc_subnets}"
   }
   setting {
-    namespace = "aws:ec2:vpc"
-    name      = "ELBSubnets"
-    value     = "${var.elb_subnets}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:ec2:vpc" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "ELBSubnets" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.elb_subnets : var.environmentType}"
   }
   setting {
     namespace = "aws:ec2:vpc"
@@ -146,6 +160,53 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     value     = "${var.max_instance}"
   }
 
+  # Configure scaling triggers for your environment's Auto Scaling group.
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "BreachDuration" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_breach_duration : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "LowerBreachScaleIncrement" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_lower_breach_scale_increment : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "LowerThreshold" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_lower_threshold : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "MeasureName" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_measure_name : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "Period" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_period : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "Statistic" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_statistic : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "Unit" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_unit : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "UpperBreachScaleIncrement" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_upper_breachs_scale_increment : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:autoscaling:trigger" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "UpperThreshold" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.as_upper_threshold : var.environmentType}"
+  }
+
   # Configure rolling deployments for your application code.
   setting {
     namespace = "aws:elasticbeanstalk:command"
@@ -157,53 +218,58 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     name      = "IgnoreHealthCheck"
     value     = "${var.ignore_healthcheck}"
   }
+  setting {
+    namespace = "aws:elasticbeanstalk:healthreporting:system"
+    name      = "SystemType"
+    value     = "${var.healthreporting}"
+  }
 
   # Configure your environment's architecture and service role.
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "EnvironmentType"
-    value     = "LoadBalanced"
+    value     = "${var.environmentType}"
   }
 
   # Configure the default listener (port 80) on a classic load balancer.
   setting {
-    namespace = "aws:elb:listener:80"
-    name      = "InstancePort"
-    value     = "${var.port}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:80" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "InstancePort" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.port : var.environmentType}"
   }
   setting {
-    namespace = "aws:elb:listener:80"
-    name      = "ListenerEnabled"
-    value     = "${var.enable_http}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:80" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "ListenerEnabled" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.enable_http : var.environmentType}"
   }
 
   # Configure additional listeners on a classic load balancer.
   setting {
-    namespace = "aws:elb:listener:443"
-    name      = "ListenerProtocol"
-    value     = "HTTPS"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:443" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "ListenerProtocol" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? "HTTPS" : var.environmentType}"
   }
   setting {
-    namespace = "aws:elb:listener:443"
-    name      = "InstancePort"
-    value     = "${var.port}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:443" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "InstancePort" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.port : var.environmentType}"
   }
   setting {
-    namespace = "aws:elb:listener:443"
-    name      = "SSLCertificateId"
-    value     = "${var.ssl_certificate_id}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:443" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "SSLCertificateId" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.ssl_certificate_id : var.environmentType}"
   }
   setting {
-    namespace = "aws:elb:listener:443"
-    name      = "ListenerEnabled"
-    value     = "${var.enable_https}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:listener:443" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "ListenerEnabled" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.enable_https : var.environmentType}"
   }
 
   # Modify the default stickiness and global load balancer policies for a classic load balancer.
   setting {
-    namespace = "aws:elb:policies"
-    name      = "ConnectionSettingIdleTimeout"
-    value     = "${var.elb_connection_timeout}"
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:policies" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "ConnectionSettingIdleTimeout" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.elb_connection_timeout : var.environmentType}"
   }
 
   # Configure a health check path for your application. (ELB Healthcheck)
@@ -211,6 +277,35 @@ resource "aws_elastic_beanstalk_environment" "eb_env" {
     namespace = "aws:elasticbeanstalk:application"
     name      = "Application Healthcheck URL"
     value     = "${var.healthcheck_url}"
+  }
+
+  # Configure ELB Healthcheck
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:healthcheck" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "HealthyThreshold" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.healthcheck_healthy_threshold : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:healthcheck" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "UnhealthyThreshold" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.healthcheck_unhealthy_threshold : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:healthcheck" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "Interval" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.healthcheck_interval : var.environmentType}"
+  }
+  setting {
+    namespace = "${var.environmentType == "LoadBalanced" ? "aws:elb:healthcheck" : "aws:elasticbeanstalk:environment"}"
+    name      = "${var.environmentType == "LoadBalanced" ? "Timeout" : "EnvironmentType"}"
+    value     = "${var.environmentType == "LoadBalanced" ? var.healthcheck_timeout : var.environmentType}"
+  }
+
+  # Configure notifications for your environment.
+  setting {
+    namespace = "aws:elasticbeanstalk:sns:topics"
+    name      = "Notification Topic ARN"
+    value     = "${var.notification_topic_arn}"
   }
 
   # Node.js Platform Options

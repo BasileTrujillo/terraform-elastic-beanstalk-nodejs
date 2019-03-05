@@ -128,6 +128,11 @@ variable "cache_forward_cookies" {
   default = "all"
   description = "Specifies whether you want CloudFront to forward cookies to the origin that is associated with this cache behavior. You can specify all, none or whitelist. If whitelist, you must include the subsequent whitelisted_names"
 }
+variable "cache_forward_headers" {
+  type    = "list"
+  default = []
+  description = "Specifies the Headers, if any, that you want CloudFront to vary upon for this cache behavior. Specify * to include all headers."
+}
 variable "cache_viewer_protocol_policy" {
   type    = "string"
   default = "redirect-to-https"
@@ -152,12 +157,12 @@ variable "cache_default_ttl" {
 # Geo Restrictions
 variable "geo_restriction_type" {
   type = "string"
-  default = "whitelist"
+  default = "none"
   description = "The method that you want to use to restrict distribution of your content by country: none, whitelist, or blacklist."
 }
 variable "geo_restriction_locations" {
   type = "list"
-  default = ["US", "FR", "GB", "DE"] # http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.htm
+  default = [] # http://www.iso.org/iso/country_codes/iso_3166_code_lists/country_names_and_code_elements.htm
   description = "The ISO 3166-1-alpha-2 codes for which you want CloudFront either to distribute your content (whitelist) or not distribute your content (blacklist)."
 }
 
